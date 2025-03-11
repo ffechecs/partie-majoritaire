@@ -1,0 +1,9 @@
+{
+    "lib": [
+        "DOM"
+    ],
+    "references": [
+        "./server",
+        "./client"
+    ]
+}

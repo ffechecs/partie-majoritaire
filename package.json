@@ -1,0 +1,15 @@
+{
+  "name": "eden-ws",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun index.ts"
+  },
+  "devDependencies": {
+    "bun-types": "^0.5.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.29.3",
+    "drizzle-typebox": "^0.1.1"
+  }
+}

@@ -1,0 +1,28 @@
+# fly.toml app configuration file generated for partie-majoritaire on 2023-07-25T21:20:57+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "partie-majoritaire"
+primary_region = "cdg"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 3001
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+  [services.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 100
+
+  [[services.tcp_checks]]
+    interval = "10s"
+    timeout = "2s"
+    restart_limit = 0

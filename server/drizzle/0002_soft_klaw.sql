@@ -1,0 +1,1 @@
+ALTER TABLE `games` ADD `created_by` text(36) NOT NULL;

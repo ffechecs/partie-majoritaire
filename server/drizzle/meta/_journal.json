@@ -1,0 +1,34 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1710157881221,
+      "tag": "0000_ambitious_next_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1715791369652,
+      "tag": "0001_reflective_namora",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1716489438862,
+      "tag": "0002_soft_klaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1716909162702,
+      "tag": "0003_smooth_jackal",
+      "breakpoints": true
+    }
+  ]
+}
