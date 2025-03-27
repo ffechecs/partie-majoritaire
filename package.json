@@ -3,7 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun index.ts"
+    "dev": "bun index.ts",
+    "backend": "bun run --hot server/src/index.ts",
+    "frontend": "bun --cwd client dev"
   },
   "devDependencies": {
     "bun-types": "^0.5.0"
