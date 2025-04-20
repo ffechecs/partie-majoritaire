@@ -22,29 +22,17 @@ import {
 import { Move } from "../../../../../server/src/db/schema/game"
 
 interface GameProps {
-  color: "w" | "b"
+  playerColor: "w" | "b"
   playerType: "spectator" | "challenger" | "majority"
   context: ReturnType<typeof useWebsocket>
 }
 
-// differents states for majority
-// - C'est le moment du vote
-// - En attente des autres votes
-// - En attente du coup du Champion
-// - Victoire du Champion!
-// - Victoire du Majorité!
 type MajorityGameState =
   | "C'est le moment du vote"
   | "En attente des autres votes"
   | "En attente du coup du Champion"
   | "Victoire du Champion!"
   | "Victoire de la Majorité!"
-
-// differents states for challenger
-// - C'est le moment de jouer
-// - En attente des votes de la Majorité
-// - Victoire du Champion!
-// - Victoire du Majorité!
 
 type ChallengerGameState =
   | "C'est le moment de jouer"
@@ -173,7 +161,6 @@ function ContextDisplay({
           <span className="text-xl font-bold">
             En attente des autres votes...
           </span>
-          {/* <img src={pieceUrlMajority} className="h-[45px]" /> */}
         </Base>
       )
       break
@@ -183,7 +170,6 @@ function ContextDisplay({
           <span className="text-xl font-bold">
             En attente du coup du Champion...
           </span>
-          {/* <img src={pieceUrlChallenger} className="h-[45px]" /> */}
         </Base>
       )
       break
@@ -301,39 +287,12 @@ export function VotesDisplay({
     votesBySan.push({
       moveSan,
       percent: (count / votes.length) * 100,
-      isPlayerMove: false, // Assuming default value as false
+      isPlayerMove: false,
     })
   })
 
   votesBySan.sort((a, b) => b.percent - a.percent)
-  // trim to take only the first 5 votes
   votesBySan = votesBySan.slice(0, 5)
-
-  const votesBySanFake = [
-    {
-      moveSan: "b4",
-      percent: 50,
-    },
-    {
-      moveSan: "c4",
-      percent: 20,
-    },
-    {
-      moveSan: "e4",
-      percent: 10,
-    },
-    {
-      moveSan: "e4",
-      percent: 5,
-    },
-    {
-      moveSan: "e4",
-      percent: 5,
-    },
-  ]
-
-  // votesBySan = votesBySanFake
-  // showMove = true
 
   if (playerId) {
     const playerMove = votes.find((vote) => vote.playerId == playerId)
@@ -435,7 +394,6 @@ export function MovesDisplay({ moves }: { moves: Move[] }) {
   }
   const group: ([Move, Move] | [Move])[] = []
 
-  // group by 2
   for (let i = 0; i < moves.length; i += 2) {
     if (i + 1 == moves.length) {
       group.push([moves[i]])
@@ -510,7 +468,7 @@ export function MovesDisplay({ moves }: { moves: Move[] }) {
   )
 }
 
-export function Game({ context, color, playerType }: GameProps) {
+export function Game({ context, playerColor, playerType }: GameProps) {
   const [lastVotedCoords, setLastVotedCoords] = useState<{
     from: Square
     to: Square
@@ -576,9 +534,7 @@ export function Game({ context, color, playerType }: GameProps) {
         type: "vote",
         data: {
           color:
-            context.info.gameInfo?.settings.challengerColor == "white"
-              ? "black"
-              : "white",
+            playerColor == "w" ? "white" : "black",
           fen: fen,
           moveSan: moveSan,
           playerId: context.info.playerId,
@@ -596,7 +552,7 @@ export function Game({ context, color, playerType }: GameProps) {
     [string, string, string, string] | null
   >(null)
 
-  const [open, setOpen] = useState(false)
+  const [openConfirmMoveModal, setOpenConfirmMoveModal] = useState(false)
 
   function selectSecondSquare(square: Square) {
     if (!game) {
@@ -607,7 +563,7 @@ export function Game({ context, color, playerType }: GameProps) {
       throw new Error("No first square")
     }
     // if new selected square is color of player, set as first square
-    if (game.get(square)?.color == color) {
+    if (game.get(square)?.color == playerColor) {
       // set custom square styles for possible moves
       const moves = game.moves({ square, verbose: true })
       const styles: CustomSquareStyles = {}
@@ -623,18 +579,19 @@ export function Game({ context, color, playerType }: GameProps) {
     }
 
     try {
-      console.log("try move", firstSquare, square)
       const move = game.move({
         from: firstSquare,
         to: square,
         promotion: "q",
       })
 
-      setGame(game)
-      setPendingMove([move.san, game.fen(), move.from, move.to])
-      game.undo()
-      setOpen(true)
-      // sendMove(move.san, game.fen(), move.from, move.to)
+      if (playerType == "challenger") {
+        sendMove(move.san, game.fen(), move.from, move.to)
+      } else {
+        setPendingMove([move.san, game.fen(), move.from, move.to])
+        game.undo()
+        setOpenConfirmMoveModal(true)
+      }
       setLastVotedCoords({ from: firstSquare, to: square })
       setFirstSquare(undefined)
       setCustomSquareStyles({})
@@ -652,7 +609,7 @@ export function Game({ context, color, playerType }: GameProps) {
       console.log("no piece")
       return
     }
-    if (game.turn() != color) {
+    if (game.turn() != playerColor) {
       console.log("not your turn")
       return
     }
@@ -724,12 +681,7 @@ export function Game({ context, color, playerType }: GameProps) {
 
     const challengerColor =
       context.info.gameInfo?.settings.challengerColor == "black" ? "b" : "w"
-    const userColor =
-      playerType == "challenger"
-        ? challengerColor
-        : challengerColor == "b"
-          ? "w"
-          : "b"
+    const userColor = playerColor
 
     const isUserTurn = game.turn() == userColor
     if (!isUserTurn) {
@@ -749,15 +701,15 @@ export function Game({ context, color, playerType }: GameProps) {
     playerType
   ) as [Square, Square][]
 
-  function validateMove() {
+  function confirmMove() {
     if (pendingMove == null) return
     const [moveSan, fen, startSquare, endSquare] = pendingMove
     sendMove(moveSan, fen, startSquare, endSquare)
-    setOpen(false)
+    setOpenConfirmMoveModal(false)
   }
+
   function cancelMove() {
-    console.log("cancelMove")
-    setOpen(false)
+    setOpenConfirmMoveModal(false)
     setPendingMove(null)
     setLastVotedCoords(null)
   }
@@ -768,12 +720,8 @@ export function Game({ context, color, playerType }: GameProps) {
   }
 
   function getPercentageOfSelectedPlayerVote(
-    context: ReturnType<typeof useWebsocket>,
-    game: Chess | undefined,
-    playerType: GameProps["playerType"]
+    context: ReturnType<typeof useWebsocket>
   ) {
-    // Assuming context has a votes property which is an array of vote objects
-    // and each vote object has a playerType property
     if (!context.votes || !Array.isArray(context.votes)) {
       return 0
     }
@@ -816,14 +764,12 @@ export function Game({ context, color, playerType }: GameProps) {
   }
 
   const percentageOfSelectedPlayerVote = getPercentageOfSelectedPlayerVote(
-    context,
-    game,
-    playerType
+    context
   )
 
   return (
     <div className="mx-16 my-4">
-      <Dialog.Root open={open}>
+      <Dialog.Root open={openConfirmMoveModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
 
@@ -842,18 +788,12 @@ export function Game({ context, color, playerType }: GameProps) {
                 <Button variant="outline" onClick={cancelMove}>
                   Annuler
                 </Button>
-                <Button onClick={validateMove}>Jouer le coup</Button>
+                <Button onClick={confirmMove}>Jouer le coup</Button>
               </div>
             </div>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-
-      {/* {playerType == "spectator" && (
-        <div>
-          <pre>{JSON.stringify(context.players, null, 2)}</pre>
-        </div>
-      )} */}
 
       <div className="flex flex-1 justify-center gap-4">
         <h1 className="mb-5 text-center text-2xl font-bold 2xl:text-3xl">
@@ -898,14 +838,11 @@ export function Game({ context, color, playerType }: GameProps) {
                         ? ""
                         : convertToFrenchNotation(pendingMove[0])}
                     </span>
-                    {/* <pre>{JSON.stringify(context.lastUserVote, null, 2)}</pre> */}
                   </div>
                 )}
 
                 <Board
-                  // key={"board_" + game.fen() + "_" + context.winner}
-                  boardOrientation={color == "w" ? "white" : "black"}
-                  // boardWidth={500}
+                  boardOrientation={playerColor == "w" ? "white" : "black"}
                   position={game.fen()}
                   customSquareStyles={customSquareStyles}
                   customArrows={customArrows}
@@ -921,17 +858,6 @@ export function Game({ context, color, playerType }: GameProps) {
         <div className="flex w-[400px] flex-col gap-4">
           {state && (
             <>
-              {/* <pre>
-                {JSON.stringify(
-                  {
-                    numberOfSelectedPlayerVote: percentageOfSelectedPlayerVote,
-                    playerVotes: context.allUserVotes.map((v) => v.moveSan),
-                    moves: context.moves.map((v) => v.moveSan),
-                  },
-                  null,
-                  2
-                )}
-              </pre> */}
               <ContextDisplay
                 context={context}
                 game={game}

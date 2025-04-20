@@ -21,7 +21,7 @@ export default function Page({ params }: PageProps) {
       {!context.info.isConnected ? (
         <div>Not connected</div>
       ) : (
-        <Game context={context} color={color} playerType="spectator" />
+        <Game context={context} playerColor={color} playerType="spectator" />
       )}
     </div>
   )

@@ -43,7 +43,7 @@ export default function Page({ params }: PageProps) {
     </div>
   ) : (
     <div>
-      <Game context={context} color={color} playerType="majority" />
+      <Game context={context} playerColor={color} playerType="majority" />
     </div>
   )
 }
