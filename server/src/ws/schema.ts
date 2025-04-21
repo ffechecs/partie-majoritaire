@@ -1,4 +1,4 @@
-import { t, Static } from "elysia";
+import { t } from "elysia";
 
 const gameSchema = t.Object({
   id: t.String(),
@@ -9,6 +9,7 @@ const gameSchema = t.Object({
     challengerTime: t.Number(),
     majorityTime: t.Number(),
     isGameForSchools: t.Boolean(),
+    challengerMoveConfirmation: t.Boolean(),
     liveStreamUrl: t.Optional(t.String()),
   }),
   majorityCode: t.String(),
