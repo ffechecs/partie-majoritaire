@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -96,12 +95,11 @@ const formSchema = z.object({
   majorityTime: z.enum(possibleTimesValues),
   challengerTime: z.enum(possibleTimesValues),
   isGameForSchools: z.boolean(),
+  challengerMoveConfirmation: z.boolean(),
   liveStreamUrl: z.string().url().optional(),
 })
 
 export function EditForm(props: { game: Game; refetch: () => void }) {
-  const router = useRouter()
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -110,15 +108,12 @@ export function EditForm(props: { game: Game; refetch: () => void }) {
       majorityTime: props.game.settings.majorityTime.toString(),
       challengerTime: props.game.settings.challengerTime.toString(),
       isGameForSchools: props.game.settings.isGameForSchools,
-      liveStreamUrl: props.game.settings.liveStreamUrl
+      challengerMoveConfirmation: props.game.settings.challengerMoveConfirmation,
+      liveStreamUrl: props.game.settings.liveStreamUrl,
     },
   })
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values)
     const res = await apiClient.games.patch({
       id: props.game.id,
       name: values.name,
@@ -127,12 +122,13 @@ export function EditForm(props: { game: Game; refetch: () => void }) {
         majorityTime: parseInt(values.majorityTime),
         challengerTime: parseInt(values.challengerTime),
         isGameForSchools: values.isGameForSchools,
+        challengerMoveConfirmation: values.challengerMoveConfirmation,
         liveStreamUrl: values.liveStreamUrl,
       },
     })
-    // router.refresh()
     if (res.data) props.refetch()
   }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -145,7 +141,6 @@ export function EditForm(props: { game: Game; refetch: () => void }) {
               <FormControl>
                 <Input placeholder="Partie Majoritaire ..." {...field} />
               </FormControl>
-              {/* <FormDescription>Nom public de la partie</FormDescription> */}
               <FormMessage />
             </FormItem>
           )}
@@ -172,7 +167,7 @@ export function EditForm(props: { game: Game; refetch: () => void }) {
         <FormField
           control={form.control}
           name="isGameForSchools"
-          render={({ field, fieldState, formState }) => (
+          render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
                 <FormLabel>
@@ -189,6 +184,26 @@ export function EditForm(props: { game: Game; refetch: () => void }) {
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="challengerMoveConfirmation"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>
+                  Le Champion doit-il valider son coup avant qu'il ne soit pris
+                  en compte ?
+                </FormLabel>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        ></FormField>
         {/* <FormField
           control={form.control}
           name="challengerColor"

@@ -126,6 +126,7 @@ const gameRoutes = new Elysia()
           challengerTime: t.Number(),
           majorityTime: t.Number(),
           isGameForSchools: t.Boolean(),
+          challengerMoveConfirmation: t.Boolean(),
           liveStreamUrl: t.Optional(t.String()),
         }),
       }),

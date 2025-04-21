@@ -18,6 +18,7 @@ export const TableGames = sqliteTable("games", {
       challengerTime: number;
       majorityTime: number;
       isGameForSchools: boolean;
+      challengerMoveConfirmation: boolean;
       liveStreamUrl?: string;
     }>()
     .notNull(),
