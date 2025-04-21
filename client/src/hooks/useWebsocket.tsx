@@ -37,10 +37,8 @@ export function useWebsocket(
   )
   const [gameInfo, setGameInfo] = useState<GameInfo>()
   const [winner, setWinner] = useState<string>()
-  const router = useRouter()
 
   useEffect(() => {
-    console.log("runnning useeffect with", { gameId, playerId })
     if (!gameId) {
       return
     }
@@ -52,13 +50,11 @@ export function useWebsocket(
       },
     })
     currentChat.on("open", (data) => {
-      console.log("open", data)
       setChat(currentChat)
     })
     let localGameInfo: GameInfo | undefined = undefined
     currentChat.on("message", ({ data }) => {
       const message = data as WsBodyReqType
-      console.log(message.type)
       if (message.type == "connect") {
         localGameInfo = message.data.game
         setGameInfo(message.data.game)
@@ -78,10 +74,6 @@ export function useWebsocket(
         setHasUserVoted(false)
         setLastUserVote(null)
         setLastMove(message.move)
-        console.log("DECISION TO CLEAR VOTES OR NOT", {
-          moveColor: message.move.color,
-          challengerColor: localGameInfo?.settings.challengerColor,
-        })
         if (message.move.color == localGameInfo?.settings.challengerColor) {
           setVotes([])
         }
@@ -99,12 +91,9 @@ export function useWebsocket(
       }
     })
     currentChat.on("close", (data) => {
-      console.log("close", data)
       setChat(undefined)
     })
-    console.log("setting chat", currentChat)
     return () => {
-      console.log("closing callback")
       currentChat.close()
     }
   }, [gameId, playerId])
@@ -114,7 +103,6 @@ export function useWebsocket(
       throw new Error("No chat")
     }
 
-    // if data as key 'type'
     if (typeof data == "object" && "type" in data) {
       if (data.type == "vote") {
         setHasUserVoted(true)

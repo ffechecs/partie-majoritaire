@@ -1,25 +1,22 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
+"use client";
 
-import { JSX, ReactNode, useEffect, useRef, useState } from "react"
-import { useWebsocket } from "@/hooks/useWebsocket"
-import * as Dialog from "@radix-ui/react-dialog"
-import { Chess, Square } from "chess.js"
-import {
-  CustomSquareStyles,
-  Piece,
-} from "react-chessboard/dist/chessboard/types"
-import Countdown from "react-countdown"
+import { JSX, ReactNode, useEffect, useRef, useState } from "react";
+import { useWebsocket } from "@/hooks/useWebsocket";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Chess, Square } from "chess.js";
+import { CustomSquareStyles, Piece } from "react-chessboard/dist/chessboard/types";
+import Countdown from "react-countdown";
 
-import { cn } from "@/lib/utils"
-import { Board } from "@/components/board"
-import { Link } from "@/components/link"
-import { Button } from "@/components/ui/button"
-import {
-  LockCountdown,
-  getTimeRenderer,
-} from "@/components/utils/time-renderer"
-import { Move } from "../../../../../server/src/db/schema/game"
+
+
+import { cn } from "@/lib/utils";
+import { Board } from "@/components/board";
+import { Link } from "@/components/link";
+import { Button } from "@/components/ui/button";
+import { LockCountdown, getTimeRenderer } from "@/components/utils/time-renderer";
+import { Move } from "../../../../../server/src/db/schema/game";
+
 
 interface GameProps {
   playerColor: "w" | "b"
@@ -364,9 +361,7 @@ function getArrows(
 
   if (playerType == "challenger") {
     if (game?.turn() == challengerColor) {
-      return context.lastMove
-        ? [[context.lastMove.startSquare, context.lastMove.endSquare]]
-        : []
+      return context.lastMove ? [[context.lastMove.startSquare, context.lastMove.endSquare]] : []
     } else {
       return []
     }
@@ -376,9 +371,7 @@ function getArrows(
     } else {
       return lastVotedCoords
         ? [[lastVotedCoords.from, lastVotedCoords.to]]
-        : context.lastUserVote
-          ? [[context.lastUserVote.startSquare, context.lastUserVote.endSquare]]
-          : []
+        : context.lastUserVote ? [[context.lastUserVote.startSquare, context.lastUserVote.endSquare]] : []
     }
   }
 }
@@ -585,7 +578,7 @@ export function Game({ context, playerColor, playerType }: GameProps) {
         promotion: "q",
       })
 
-      if (playerType == "challenger") {
+      if (playerType == "challenger" && !context.info.gameInfo?.settings.challengerMoveConfirmation) {
         sendMove(move.san, game.fen(), move.from, move.to)
       } else {
         setPendingMove([move.san, game.fen(), move.from, move.to])
@@ -622,12 +615,10 @@ export function Game({ context, playerColor, playerType }: GameProps) {
       }
     })
     setCustomSquareStyles(styles)
-    console.log("in select first squre, setting first squre", square)
     setFirstSquare(square)
   }
 
   const onSquareClick: (square: Square) => void = (square) => {
-    console.log("onSquareClick", square)
     if (playerType == "spectator" || context.winner) return
     if (!game) {
       throw new Error("No game")
@@ -651,7 +642,6 @@ export function Game({ context, playerColor, playerType }: GameProps) {
   }, [firstSquare])
 
   function onPieceDragBegin(piece: Piece, sourceSquare: Square) {
-    console.log("onPieceDragBegin", piece, sourceSquare)
     selectFirstSquare(sourceSquare)
   }
   const onPieceDrop: (
@@ -659,8 +649,6 @@ export function Game({ context, playerColor, playerType }: GameProps) {
     targetSquare: Square,
     piece: Piece
   ) => boolean = (sourceSquare, targetSquare, piece) => {
-    console.log("onPieceDrop", sourceSquare, targetSquare, piece)
-    // console.log("firstSquare", firstSquare)
     selectSecondSquare(targetSquare)
     return false
   }
@@ -679,11 +667,8 @@ export function Game({ context, playerColor, playerType }: GameProps) {
       return false
     }
 
-    const challengerColor =
-      context.info.gameInfo?.settings.challengerColor == "black" ? "b" : "w"
-    const userColor = playerColor
-
-    const isUserTurn = game.turn() == userColor
+    const challengerColor = context.info.gameInfo?.settings.challengerColor == "black" ? "b" : "w"
+    const isUserTurn = game.turn() == playerColor
     if (!isUserTurn) {
       return false
     }
