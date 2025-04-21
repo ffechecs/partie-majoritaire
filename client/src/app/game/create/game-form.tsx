@@ -84,10 +84,9 @@ const possiblesTimes =
         },
       ]
 
-const possibleTimesValues = possiblesTimes.map((t) => t.value) as [
-  string,
-  ...string[],
-]
+const possibleTimesValues = possiblesTimes.map(
+  (timeEntry) => timeEntry.value
+) as [string, ...string[]]
 
 const formSchema = z.object({
   name: z.string().min(2),
@@ -95,6 +94,7 @@ const formSchema = z.object({
   majorityTime: z.enum(possibleTimesValues),
   challengerTime: z.enum(possibleTimesValues),
   isGameForSchools: z.boolean(),
+  challengerMoveConfirmation: z.boolean(),
   liveStreamUrl: z
     .string()
     .transform((val) => (val === "" ? undefined : val))
@@ -104,31 +104,25 @@ const formSchema = z.object({
 
 export function GameForm() {
   const router = useRouter()
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       challengerColor: "white",
       majorityTime:
-        ACTIVATE_ALL_TIME_IN_DEV == false ||
-        process.env.NODE_ENV == "production"
+        !ACTIVATE_ALL_TIME_IN_DEV || process.env.NODE_ENV == "production"
           ? "120"
           : "30",
       challengerTime:
-        ACTIVATE_ALL_TIME_IN_DEV == false ||
-        process.env.NODE_ENV == "production"
+        !ACTIVATE_ALL_TIME_IN_DEV || process.env.NODE_ENV == "production"
           ? "120"
           : "30",
       isGameForSchools: false,
+      challengerMoveConfirmation: false,
     },
   })
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values)
     const res = await apiClient.games.post({
       name: values.name,
       settings: {
@@ -136,12 +130,14 @@ export function GameForm() {
         majorityTime: parseInt(values.majorityTime),
         challengerTime: parseInt(values.challengerTime),
         isGameForSchools: values.isGameForSchools,
+        challengerMoveConfirmation: values.challengerMoveConfirmation,
         liveStreamUrl: values.liveStreamUrl,
       },
     })
     router.refresh()
     if (res.data) router.push(`/game/${res.data.id}`)
   }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -154,7 +150,6 @@ export function GameForm() {
               <FormControl>
                 <Input placeholder="Partie Majoritaire ..." {...field} />
               </FormControl>
-              {/* <FormDescription>Nom public de la partie</FormDescription> */}
               <FormMessage />
             </FormItem>
           )}
@@ -180,7 +175,7 @@ export function GameForm() {
         <FormField
           control={form.control}
           name="isGameForSchools"
-          render={({ field, fieldState, formState }) => (
+          render={({ field }) => (
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
                 <FormLabel>
@@ -197,6 +192,24 @@ export function GameForm() {
             </FormItem>
           )}
         />
+        <FormField
+            control={form.control}
+            name="challengerMoveConfirmation"
+            render={({ field}) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                        <FormLabel>
+                          Le Champion doit-il valider son coup avant qu'il ne soit pris en compte ?
+                        </FormLabel>
+                    </div>
+                    <FormControl>
+                        <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                </FormItem>
+            )}></FormField>
         {/* <FormField
           control={form.control}
           name="challengerColor"

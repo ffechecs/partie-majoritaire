@@ -1,38 +1,34 @@
 import {
   addGame,
+  addPlayer,
   deleteGame,
   editGame,
+  findPlayerWithUserId,
   getGame,
   getGameByCode,
   getGameFull,
-  getGames,
   getGamesVisibleInAdmin,
   getPlayer,
   getPlayers,
 } from "./methods";
 
-import { addPlayer, findPlayerWithUserId } from "./methods/players";
-
-import { Elysia, t } from "elysia";
-import { authMiddleware } from "./middleware";
-import { editUser, getUser, getUsers } from "./methods/users";
-import { userInfoSchema } from "./db/schema/auth";
-import { client } from "./db/db";
+import {Elysia, t} from "elysia";
+import {authMiddleware} from "./middleware";
+import {editUser, getUser, getUsers} from "./methods/users";
+import {userInfoSchema} from "./db/schema/auth";
+import {client} from "./db/db";
 
 const gameRoutes = new Elysia()
   .use(authMiddleware)
   .get("/players", async () => {
-    const players = await getPlayers();
-    return players;
+    return await getPlayers();
   })
   .get("players/:id", async ({ params }) => {
-    const player = await getPlayer(params.id);
-    return player;
+    return await getPlayer(params.id);
   })
   .post(
     "/players",
     async ({ body, headers, user, session }) => {
-      console.log("POST PLAYERS");
       if (!user) {
         throw new Error("User not found");
       }
@@ -40,12 +36,10 @@ const gameRoutes = new Elysia()
       if (existingPlayer) {
         return existingPlayer;
       }
-      const player = body;
-      const insertedPlayer = await addPlayer({
-        name: player.name,
+      return await addPlayer({
+        name: body.name,
         userId: user.id,
       });
-      return insertedPlayer;
     },
     { body: t.Object({ name: t.String() }) }
   )
@@ -53,8 +47,7 @@ const gameRoutes = new Elysia()
     if (!user) {
       throw new Error("User not found");
     }
-    const games = await getGamesVisibleInAdmin(user);
-    return games;
+    return await getGamesVisibleInAdmin(user);
   })
   .delete("/games/:id", async ({ params }) => {
     await deleteGame(params.id);
@@ -81,12 +74,11 @@ const gameRoutes = new Elysia()
         throw new Error("User not found");
       }
       const game = body;
-      const insertedGame = await addGame({
-        name: game.name,
-        settings: game.settings,
-        createdBy: user?.id || "pq5v8jhz86c17x",
+      return await addGame({
+          name: game.name,
+          settings: game.settings,
+          createdBy: user?.id || "pq5v8jhz86c17x",
       });
-      return insertedGame;
     },
     {
       body: t.Object({
@@ -96,6 +88,7 @@ const gameRoutes = new Elysia()
           challengerTime: t.Number(),
           majorityTime: t.Number(),
           isGameForSchools: t.Boolean(),
+          challengerMoveConfirmation: t.Boolean(),
           liveStreamUrl: t.Optional(t.String()),
         }),
       }),
@@ -118,12 +111,11 @@ const gameRoutes = new Elysia()
       }
 
       const game = body;
-      const insertedGame = await editGame({
+      return await editGame({
         id: game.id,
         name: game.name,
         settings: game.settings,
       });
-      return insertedGame;
     },
     {
       body: t.Object({
@@ -140,8 +132,7 @@ const gameRoutes = new Elysia()
     }
   )
   .get("/games/code/:code", async ({ params }) => {
-    const game = await getGameByCode(params.code);
-    return game;
+    return await getGameByCode(params.code);
   });
 
 export const userRoutes = new Elysia()
@@ -150,12 +141,10 @@ export const userRoutes = new Elysia()
     if (!user) {
       throw new Error("User not found");
     }
-    const users = await getUsers();
-    return users;
+    return await getUsers();
   })
   .get("/users/:id", async ({ params }) => {
-    const user = await getUser(params.id);
-    return user;
+    return await getUser(params.id);
   })
   //edit a user
   .patch(
@@ -165,8 +154,7 @@ export const userRoutes = new Elysia()
         throw new Error("You are not superadmin");
       }
 
-      const editedUser = await editUser(params.id, body);
-      return editedUser;
+      return await editUser(params.id, body);
     },
     {
       body: t.Object({
