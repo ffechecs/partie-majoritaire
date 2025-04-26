@@ -1,0 +1,15 @@
+services:
+  libsql:
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    environment:
+      - SQLD_NODE=primary
+      - SQLD_AUTH_JWT_KEY=${PUBLIC_AUTH_TOKEN}
+    ports:
+      - "8080:8080"
+  pm:
+    build: ./server
+    environment:
+      - DB_URL=http://libsql:8080
+      - AUTH_TOKEN=${AUTH_TOKEN}
+    ports:
+      - "3001:3001"
