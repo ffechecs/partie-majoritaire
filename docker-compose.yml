@@ -6,10 +6,19 @@ services:
       - SQLD_AUTH_JWT_KEY=${PUBLIC_AUTH_TOKEN}
     ports:
       - "8080:8080"
+
+  # TODO: fix service for setting up database structure
+  libsql-setup:
+    image: alpine
+    depends_on:
+      - libsql
+    command: [ "bun run --cwd server db:push" ]
+
   pm:
     build: ./server
     environment:
       - DB_URL=http://libsql:8080
       - AUTH_TOKEN=${AUTH_TOKEN}
+      - BREVO_API_KEY=${BREVO_API_KEY}
     ports:
       - "3001:3001"
