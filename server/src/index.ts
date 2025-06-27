@@ -64,10 +64,9 @@ async function isConnectionCorrect(
   return true;
 }
 
-const app = new Elysia({ websocket: { publishToSelf: true }, name: "server" })
+const app = new Elysia({ prefix: "/api", websocket: { publishToSelf: true }, name: "server" })
   // .use(Logestic.preset("fancy"))
   .use(logger)
-
   .use(
     cron({
       name: "server sync",
