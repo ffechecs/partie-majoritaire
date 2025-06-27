@@ -7,7 +7,7 @@ export async function sendEmail(email: string, code: string) {
     return;
   }
 
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+  const response: Response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
       accept: "application/json",
@@ -44,6 +44,6 @@ export async function sendEmail(email: string, code: string) {
   });
 
   if (!response.ok) {
-    throw new Error("Error sending email");
+    throw new Error(`Error sending email: ${response.status} - ${response.body}`);
   }
 }
