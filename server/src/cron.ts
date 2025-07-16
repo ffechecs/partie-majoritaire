@@ -1,13 +1,13 @@
 import {
   addMove,
   getGameVotesForMoveNumber,
-  getGames,
   getLastGameMove,
   getRawGames,
 } from "./methods";
 import { Chess } from "chess.js";
 import type { WS } from ".";
-import { Game, Move } from "./db/schema/game";
+import {Game, Move} from "./db/schema/game";
+import {determineSelectedMove} from "./util";
 
 type Clients = Record<string, { gameId: string; ws: WS }>;
 
@@ -31,36 +31,19 @@ async function handleEndVote(game: Game, ws: WS) {
     return;
   }
 
-  const gameVotesCount = gameVotes.reduce((acc, vote) => {
-    acc[vote.moveSan] = (acc[vote.moveSan] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  const maxVote = Object.entries(gameVotesCount).reduce(
-    (acc, [moveSan, count]) => {
-      if (count > acc.count) {
-        return { moveSan, count };
-      }
-      return acc;
-    },
-    { moveSan: "", count: 0 }
-  );
-  const maxVotedMove = gameVotes.find(
-    (vote) => vote.moveSan == maxVote.moveSan
-  );
-  if (!maxVotedMove) {
-    console.log("maxVotedMove is undefined");
+  const selectedMove = determineSelectedMove(gameVotes);
+  if (!selectedMove) {
     return;
   }
 
-  console.log("maxVote", maxVote);
   const insertedMove = await addMove({
     gameId: gameId,
-    moveSan: maxVote.moveSan,
-    fen: maxVotedMove.fen,
-    moveNumber: maxVotedMove.moveNumber,
+    moveSan: selectedMove.moveSan,
+    fen: selectedMove.fen,
+    moveNumber: selectedMove.moveNumber,
     color: game.settings.challengerColor == "white" ? "black" : "white",
-    startSquare: maxVotedMove.startSquare,
-    endSquare: maxVotedMove.endSquare,
+    startSquare: selectedMove.startSquare,
+    endSquare: selectedMove.endSquare,
   });
   ws.publish(gameId, {
     type: "move",

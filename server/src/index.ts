@@ -1,5 +1,4 @@
 import { Elysia, t } from "elysia";
-// import { cors } from "./cors";
 import { cors } from "@elysiajs/cors";
 import {
   addMove,
@@ -44,6 +43,7 @@ export function prettyPrintDuration(duration: number) {
 import { logger } from "./logger";
 import { TablePlayersConnections } from "./db/schema/game";
 import { eq } from "drizzle-orm";
+import { determineSelectedMove } from "./util";
 
 async function isConnectionCorrect(
   playerId: string | undefined,
@@ -374,36 +374,19 @@ async function handleEndVoteManual(gameId: string, ws: WS) {
     return;
   }
 
-  const gameVotesCount = gameVotes.reduce((acc, vote) => {
-    acc[vote.moveSan] = (acc[vote.moveSan] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  const maxVote = Object.entries(gameVotesCount).reduce(
-    (acc, [moveSan, count]) => {
-      if (count > acc.count) {
-        return { moveSan, count };
-      }
-      return acc;
-    },
-    { moveSan: "", count: 0 }
-  );
-  const maxVotedMove = gameVotes.find(
-    (vote) => vote.moveSan == maxVote.moveSan
-  );
-  if (!maxVotedMove) {
-    console.log("maxVotedMove is undefined");
+  const selectedMove = determineSelectedMove(gameVotes);
+  if (!selectedMove) {
     return;
   }
 
-  console.log("maxVote", maxVote);
   const insertedMove = await addMove({
     gameId: gameId,
-    moveSan: maxVote.moveSan,
-    fen: maxVotedMove.fen,
-    moveNumber: maxVotedMove.moveNumber,
+    moveSan: selectedMove.moveSan,
+    fen: selectedMove.fen,
+    moveNumber: selectedMove.moveNumber,
     color: "black",
-    startSquare: maxVotedMove.startSquare,
-    endSquare: maxVotedMove.endSquare,
+    startSquare: selectedMove.startSquare,
+    endSquare: selectedMove.endSquare,
   });
   ws.publish(gameId, {
     type: "move",
