@@ -1,0 +1,15 @@
+name: Continuous Integration/Deployment
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Prod
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: 'https://forge.laravel.com/servers/769447/sites/2693133/deploy/http'
+          method: 'GET'
+          customHeaders: '{"token": "test"}'
