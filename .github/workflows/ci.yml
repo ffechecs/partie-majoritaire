@@ -10,6 +10,5 @@ jobs:
       - name: Deploy Prod
         uses: fjogeleit/http-request-action@v1
         with:
-          url: 'https://forge.laravel.com/servers/769447/sites/2693133/deploy/http'
+          url: 'https://forge.laravel.com/servers/769447/sites/2693133/deploy/http?token=${{ secrets.FORGE_TOKEN }}'
           method: 'GET'
-          customHeaders: '{"token": "${{ secrets.FORGE_TOKEN }}"}'
