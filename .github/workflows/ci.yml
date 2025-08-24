@@ -12,4 +12,4 @@ jobs:
         with:
           url: 'https://forge.laravel.com/servers/769447/sites/2693133/deploy/http'
           method: 'GET'
-          customHeaders: '{"token": "test"}'
+          customHeaders: '{"token": "${{ secrets.FORGE_TOKEN }}"}'
